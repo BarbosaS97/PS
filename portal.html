@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal do Usuário - SECAJ</title>
+    <!-- Inclua a biblioteca Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Inclua a biblioteca html2canvas para exportar gráficos -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Inclua a biblioteca jsPDF para gerar PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        /* Estilos Gerais */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Cabeçalho */
+        header {
+            background-color: #007bff;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        /* Informações do Usuário e Botão Sair */
+        .user-info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-info span {
+            font-size: 16px;
+        }
+
+        .logout-button {
+            background-color: #dc3545;
+            padding: 5px 10px;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .logout-button:hover {
+            background-color: #c82333;
+        }
+
+        /* Abas de Navegação */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            background-color: #0056b3;
+            padding: 10px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            color: white;
+            border-radius: 4px;
+            margin: 0 10px;
+            transition: background-color 0.3s;
+        }
+
+        .tab:hover {
+            background-color: #004080;
+        }
+
+        .tab.active {
+            background-color: #003366;
+        }
+
+        /* Conteúdo das Abas */
+        .content {
+            display: none;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: 20px;
+        }
+
+        .content.active {
+            display: block;
+        }
+
+        /* Gráficos */
+        .chart-container {
+            width: 48%;
+            height: 300px;
+            margin-bottom: 40px;
+            border: 2px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            display: inline-block;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .month-title,
+        .object-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+            text-align: center;
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        /* Lista de Pedidos de Prioridades */
+        .priority-item {
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+            margin-bottom: 10px;
+        }
+
+        .priority-item:last-child {
+            border-bottom: none;
+        }
+
+        .priority-item span {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        .priority-item .title {
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* Prioridade Ativa */
+        .priority-item.active {
+            background-color: #ffcccc;
+        }
+
+        /* Botão de Exportar */
+        .export-button {
+            background-color: #28a745;
+            padding: 10px 20px;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 20px;
+            transition: background-color 0.3s;
+        }
+
+        .export-button:hover {
+            background-color: #218838;
+        }
+    </style>
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Importações do Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyD1wD2KTGnM0vWqs8eGiFLQdOaQh77a5uw",
+            authDomain: "portal-secaj.firebaseapp.com",
+            projectId: "portal-secaj",
+            storageBucket: "portal-secaj.firebasestorage.app",
+            messagingSenderId: "580471459735",
+            appId: "1:580471459735:web:3092f388f6d4b3b48afed2",
+            measurementId: "G-CYSXWJZHTZ"
+        };
+
+        // Inicialização do Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Função para alternar entre abas
+        function showTab(tabName) {
+            // Esconder todas as abas
+            document.querySelectorAll('.content').forEach(content => {
+                content.classList.remove('active');
+            });
+            // Remover a classe 'active' de todas as abas
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            // Mostrar a aba selecionada
+            document.getElementById(tabName).classList.add('active');
+            // Ativar a aba no menu
+            document.querySelector(`.tab[onclick="showTab('${tabName}')"]`).classList.add('active');
+        }
+
+        // Função para sair
+        function logout() {
+            localStorage.removeItem('loggedInUser');
+            window.location.href = 'index.html';
+        }
+
+        // Função para carregar dados do Firestore
+        async function loadData() {
+            const monthsSnapshot = await getDocs(collection(db, "months"));
+            const objectsSnapshot = await getDocs(collection(db, "objects"));
+            const prioritiesSnapshot = await getDocs(collection(db, "priorities"));
+
+            const months = monthsSnapshot.docs.map(doc => doc.data());
+            const objects = objectsSnapshot.docs.map(doc => doc.data());
+            const priorities = prioritiesSnapshot.docs.map(doc => doc.data());
+
+            console.log('Meses:', months);
+            console.log('Objetos:', objects);
+            console.log('Prioridades:', priorities);
+
+            // Renderizar gráficos e dados
+            renderMonthsCharts(months);
+            renderObjectsCharts(objects);
+            renderPriorities(priorities);
+        }
+
+        // Função para renderizar os gráficos dos meses
+        function renderMonthsCharts(months) {
+            const monthsChartsContainer = document.getElementById('months-charts');
+            monthsChartsContainer.innerHTML = ''; // Limpar o container antes de renderizar
+
+            months.forEach(month => {
+                // Criar um container para cada mês
+                const monthContainer = document.createElement('div');
+                monthContainer.className = 'month-container';
+
+                // Adicionar um título destacado para o mês
+                const monthTitle = document.createElement('div');
+                monthTitle.className = 'month-title';
+                monthTitle.textContent = `Mês: ${month.name}`;
+                monthContainer.appendChild(monthTitle);
+
+                // Container para os gráficos do mês
+                const chartsContainer = document.createElement('div');
+                chartsContainer.style.display = 'flex';
+                chartsContainer.style.justifyContent = 'space-between';
+
+                // Gráfico de barras horizontais
+                const barChartContainer = document.createElement('div');
+                barChartContainer.className = 'chart-container';
+                barChartContainer.innerHTML = `<canvas id="bar-chart-${month.name}"></canvas>`;
+                chartsContainer.appendChild(barChartContainer);
+
+                // Gráfico de pizza
+                const pieChartContainer = document.createElement('div');
+                pieChartContainer.className = 'chart-container';
+                pieChartContainer.innerHTML = `<canvas id="pie-chart-${month.name}"></canvas>`;
+                chartsContainer.appendChild(pieChartContainer);
+
+                // Adicionar o container dos gráficos ao container do mês
+                monthContainer.appendChild(chartsContainer);
+
+                // Adicionar o container do mês ao container principal
+                monthsChartsContainer.appendChild(monthContainer);
+
+                // Calcular outras prioridades
+                const otherPriorities = month.legalPriority - month.over80;
+
+                // Dados para os gráficos
+                const data = {
+                    labels: ['Processos Gerais', 'Maiores de 80', 'Outras Prioridades'],
+                    datasets: [{
+                        label: 'Quantidade de Processos',
+                        data: [
+                            month.processes, // Processos gerais
+                            month.over80,    // Maiores de 80
+                            otherPriorities  // Outras prioridades
+                        ],
+                        backgroundColor: [
+                            'rgba(0, 123, 255, 0.5)', // Processos gerais
+                            'rgba(255, 99, 132, 0.5)', // Maiores de 80
+                            'rgba(75, 192, 192, 0.5)'  // Outras prioridades
+                        ],
+                        borderColor: [
+                            'rgba(0, 123, 255, 1)',
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(75, 192, 192, 1)'
+                        ],
+                        borderWidth: 2 // Borda mais espessa
+                    }]
+                };
+
+                // Renderizar o gráfico de barras horizontais
+                const barCtx = document.getElementById(`bar-chart-${month.name}`).getContext('2d');
+                new Chart(barCtx, {
+                    type: 'bar',
+                    data: data,
+                    options: {
+                        indexAxis: 'y',
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: '#ddd', // Cor das linhas de grade
+                                }
+                            },
+                            y: {
+                                grid: {
+                                    color: '#ddd', // Cor das linhas de grade
+                                }
+                            }
+                        },
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    font: {
+                                        size: 14 // Tamanho da fonte da legenda
+                                    }
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: `Processos em ${month.name} (Barras)`,
+                                font: {
+                                    size: 16 // Tamanho da fonte do título
+                                }
+                            },
+                            datalabels: {
+                                anchor: 'end',
+                                align: 'top',
+                                formatter: (value) => value,
+                                font: {
+                                    weight: 'bold',
+                                    size: 12 // Tamanho da fonte dos rótulos
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Renderizar o gráfico de pizza
+                const pieCtx = document.getElementById(`pie-chart-${month.name}`).getContext('2d');
+                new Chart(pieCtx, {
+                    type: 'pie',
+                    data: data,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    font: {
+                                        size: 14 // Tamanho da fonte da legenda
+                                    }
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: `Processos em ${month.name} (Pizza)`,
+                                font: {
+                                    size: 16 // Tamanho da fonte do título
+                                }
+                            },
+                            datalabels: {
+                                formatter: (value) => value,
+                                font: {
+                                    weight: 'bold',
+                                    size: 12 // Tamanho da fonte dos rótulos
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
+        // Função para renderizar os gráficos dos objetos
+        function renderObjectsCharts(objects) {
+            const objectsChartsContainer = document.getElementById('objects-charts');
+            objectsChartsContainer.innerHTML = ''; // Limpar o container antes de renderizar
+
+            objects.forEach(object => {
+                // Criar um container para cada objeto
+                const objectContainer = document.createElement('div');
+                objectContainer.className = 'object-container';
+
+                // Adicionar um título destacado para o objeto
+                const objectTitle = document.createElement('div');
+                objectTitle.className = 'object-title';
+                objectTitle.textContent = `Objeto: ${object.name}`;
+                objectContainer.appendChild(objectTitle);
+
+                // Container para os gráficos do objeto
+                const chartsContainer = document.createElement('div');
+                chartsContainer.style.display = 'flex';
+                chartsContainer.style.justifyContent = 'space-between';
+
+                // Gráfico de barras horizontais
+                const barChartContainer = document.createElement('div');
+                barChartContainer.className = 'chart-container';
+                barChartContainer.innerHTML = `<canvas id="bar-chart-${object.name}"></canvas>`;
+                chartsContainer.appendChild(barChartContainer);
+
+                // Gráfico de pizza
+                const pieChartContainer = document.createElement('div');
+                pieChartContainer.className = 'chart-container';
+                pieChartContainer.innerHTML = `<canvas id="pie-chart-${object.name}"></canvas>`;
+                chartsContainer.appendChild(pieChartContainer);
+
+                // Adicionar o container dos gráficos ao container do objeto
+                objectContainer.appendChild(chartsContainer);
+
+                // Adicionar o container do objeto ao container principal
+                objectsChartsContainer.appendChild(objectContainer);
+
+                // Calcular outras prioridades
+                const otherPriorities = object.legalPriority - object.over80;
+
+                // Dados para os gráficos
+                const data = {
+                    labels: ['Processos Gerais', 'Maiores de 80', 'Outras Prioridades'],
+                    datasets: [{
+                        label: 'Quantidade de Processos',
+                        data: [
+                            object.processes, // Processos gerais
+                            object.over80,    // Maiores de 80
+                            otherPriorities  // Outras prioridades
+                        ],
+                        backgroundColor: [
+                            'rgba(0, 123, 255, 0.5)', // Processos gerais
+                            'rgba(255, 99, 132, 0.5)', // Maiores de 80
+                            'rgba(75, 192, 192, 0.5)'  // Outras prioridades
+                        ],
+                        borderColor: [
+                            'rgba(0, 123, 255, 1)',
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(75, 192, 192, 1)'
+                        ],
+                        borderWidth: 2 // Borda mais espessa
+                    }]
+                };
+
+                // Renderizar o gráfico de barras horizontais
+                const barCtx = document.getElementById(`bar-chart-${object.name}`).getContext('2d');
+                new Chart(barCtx, {
+                    type: 'bar',
+                    data: data,
+                    options: {
+                        indexAxis: 'y',
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: '#ddd', // Cor das linhas de grade
+                                }
+                            },
+                            y: {
+                                grid: {
+                                    color: '#ddd', // Cor das linhas de grade
+                                }
+                            }
+                        },
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    font: {
+                                        size: 14 // Tamanho da fonte da legenda
+                                    }
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: `Processos em ${object.name} (Barras)`,
+                                font: {
+                                    size: 16 // Tamanho da fonte do título
+                                }
+                            },
+                            datalabels: {
+                                anchor: 'end',
+                                align: 'top',
+                                formatter: (value) => value,
+                                font: {
+                                    weight: 'bold',
+                                    size: 12 // Tamanho da fonte dos rótulos
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Renderizar o gráfico de pizza
+                const pieCtx = document.getElementById(`pie-chart-${object.name}`).getContext('2d');
+                new Chart(pieCtx, {
+                    type: 'pie',
+                    data: data,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    font: {
+                                        size: 14 // Tamanho da fonte da legenda
+                                    }
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: `Processos em ${object.name} (Pizza)`,
+                                font: {
+                                    size: 16 // Tamanho da fonte do título
+                                }
+                            },
+                            datalabels: {
+                                formatter: (value) => value,
+                                font: {
+                                    weight: 'bold',
+                                    size: 12 // Tamanho da fonte dos rótulos
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
+        // Função para formatar a data no formato dd/mm/aaaa
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        // Função para renderizar a lista de pedidos de prioridades
+        function renderPriorities(priorities) {
+            const priorityList = document.getElementById('priorities-list');
+            priorityList.innerHTML = '';
+            priorities.forEach(priority => {
+                const priorityDiv = document.createElement('div');
+                priorityDiv.className = `priority-item ${priority.active ? 'active' : ''}`;
+                priorityDiv.innerHTML = `
+                    <span class="title">Nº Processo:</span>
+                    <span>${priority.processNumber}</span>
+                    <span class="title">Data do Pedido:</span>
+                    <span>${formatDate(priority.requestDate)}</span>
+                    <span class="title">Data de Recebimento:</span>
+                    <span>${formatDate(priority.receiptDate)}</span>
+                    <span class="title">Responsável:</span>
+                    <span>${priority.responsible}</span>
+                    <span class="title">Informação Adicional:</span>
+                    <span>${priority.additionalInfo}</span>
+                `;
+                priorityList.appendChild(priorityDiv);
+            });
+        }
+
+        // Função para exportar para PDF
+        async function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Adicionar informações no topo do PDF
+            const userName = localStorage.getItem('loggedInUser') || "Usuário";
+            const exportTime = new Date().toLocaleString();
+            doc.setFontSize(12);
+            doc.text(`Relatório SECAJ`, 10, 10);
+            doc.text(`Exportado por: ${userName}`, 10, 20);
+            doc.text(`Data e Hora: ${exportTime}`, 10, 30);
+
+            // Adicionar gráficos dos meses
+            const monthsCharts = document.querySelectorAll('#months-charts .chart-container canvas');
+            for (let i = 0; i < monthsCharts.length; i++) {
+                const canvas = monthsCharts[i];
+                const image = await html2canvas(canvas);
+                const imgData = image.toDataURL('image/png');
+                doc.addPage();
+                doc.addImage(imgData, 'PNG', 10, 10, 180, 100); // Ajuste o tamanho da imagem conforme necessário
+            }
+
+            // Adicionar gráficos dos objetos
+            const objectsCharts = document.querySelectorAll('#objects-charts .chart-container canvas');
+            for (let i = 0; i < objectsCharts.length; i++) {
+                const canvas = objectsCharts[i];
+                const image = await html2canvas(canvas);
+                const imgData = image.toDataURL('image/png');
+                doc.addPage();
+                doc.addImage(imgData, 'PNG', 10, 10, 180, 100); // Ajuste o tamanho da imagem conforme necessário
+            }
+
+            // Salvar o PDF
+            doc.save("Relatorio_SECAJ.pdf");
+        }
+
+        // Tornar as funções globais para que possam ser chamadas no HTML
+        window.showTab = showTab;
+        window.logout = logout;
+        window.exportToPDF = exportToPDF;
+
+        // Carregar dados ao iniciar a página
+        loadData();
+
+        // Exibir o nome do usuário no topo do portal
+        const loggedInUser = localStorage.getItem('loggedInUser');
+        if (loggedInUser) {
+            document.getElementById('loggedInUser').textContent = loggedInUser;
+        }
+    </script>
+</head>
+<body>
+    <header>
+        <h1>Portal do Usuário - SECAJ</h1>
+        <div class="user-info">
+            <span>Usuário: <span id="loggedInUser"></span></span>
+            <button class="logout-button" onclick="logout()">Sair</button>
+        </div>
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('months')">Meses e Processos</div>
+            <div class="tab" onclick="showTab('objects')">Objetos e Processos</div>
+            <div class="tab" onclick="showTab('priorities')">Pedidos de Prioridades</div>
+        </div>
+    </header>
+
+    <!-- Botão de Exportar -->
+    <button class="export-button" onclick="exportToPDF()">Exportar para PDF</button>
+
+    <!-- Aba de Meses e Processos -->
+    <div class="content active" id="months">
+        <h2>Quantitativo de Processos por Mês</h2>
+        <div id="months-charts"></div> <!-- Container para os gráficos dos meses -->
+    </div>
+
+    <!-- Aba de Objetos e Processos -->
+    <div class="content" id="objects">
+        <h2>Quantitativo de Processos por Objeto</h2>
+        <div id="objects-charts"></div> <!-- Container para os gráficos dos objetos -->
+    </div>
+
+    <!-- Aba de Pedidos de Prioridades -->
+    <div class="content" id="priorities">
+        <h2>Pedidos de Prioridades</h2>
+        <div id="priorities-list"></div>
+    </div>
+</body>
+</html>
