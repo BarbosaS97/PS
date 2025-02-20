@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal SECAJ</title>
+    <!-- Ícones do Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         /* Estilos Gerais */
         body {
@@ -44,9 +46,22 @@
             color: #fff;
         }
 
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .input-group i {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.7);
+        }
+
         input {
             width: 100%;
-            padding: 12px;
+            padding: 12px 12px 12px 40px; /* Espaço para o ícone */
             margin: 10px 0;
             border: none;
             border-radius: 8px;
@@ -68,7 +83,7 @@
         button {
             width: 100%;
             padding: 12px;
-            background: #28a745;
+            background: #1e3c72; /* Azul escuro */
             color: white;
             border: none;
             border-radius: 8px;
@@ -78,7 +93,7 @@
         }
 
         button:hover {
-            background: #218838;
+            background: #2a5298; /* Azul mais claro no hover */
             transform: translateY(-2px);
         }
 
@@ -227,17 +242,29 @@
 </head>
 <body>
     <div class="login-container">
-        <h1>Bem-vindo ao Portal SECAJ</h1>
+        <h1>Portal SECAJ</h1>
         <div id="login-form">
-            <input type="text" id="username" placeholder="Usuário">
-            <input type="password" id="password" placeholder="Senha">
+            <div class="input-group">
+                <i class="fas fa-user"></i>
+                <input type="text" id="username" placeholder="Usuário">
+            </div>
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="password" placeholder="Senha">
+            </div>
             <button onclick="login()">Login</button>
             <p class="link" onclick="showRegisterForm()">Cadastrar-se</p>
             <p class="admin-link" onclick="openAdmin()">Área do Administrador</p>
         </div>
         <div id="register-form" class="register-form">
-            <input type="text" id="newUsername" placeholder="Escolha um nome de usuário">
-            <input type="password" id="newPassword" placeholder="Escolha uma senha">
+            <div class="input-group">
+                <i class="fas fa-user"></i>
+                <input type="text" id="newUsername" placeholder="Escolha um nome de usuário">
+            </div>
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="newPassword" placeholder="Escolha uma senha">
+            </div>
             <button onclick="register()">Cadastrar</button>
             <p class="link" onclick="showLoginForm()">Voltar para o Login</p>
         </div>
