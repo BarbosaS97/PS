@@ -8,30 +8,31 @@
         /* Estilos Gerais */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
-            color: #fff;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
 
-        .container {
+        /* Container de Login */
+        .login-container {
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
             border-radius: 15px;
-            padding: 20px;
+            padding: 30px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.1);
             text-align: center;
-            width: 100%;
-            max-width: 350px;
+            width: 300px;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
-        .container:hover {
+        .login-container:hover {
             transform: translateY(-10px);
             box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
         }
@@ -114,21 +115,6 @@
         .admin-link:hover {
             color: #fff;
             text-decoration: underline;
-        }
-
-        /* Responsividade */
-        @media (max-width: 480px) {
-            h1 {
-                font-size: 20px;
-            }
-
-            input, button {
-                font-size: 14px;
-            }
-
-            .link, .admin-link {
-                font-size: 12px;
-            }
         }
     </style>
     <!-- Firebase SDK -->
@@ -240,7 +226,7 @@
     </script>
 </head>
 <body>
-    <div class="container">
+    <div class="login-container">
         <h1>Bem-vindo ao Portal SECAJ</h1>
         <div id="login-form">
             <input type="text" id="username" placeholder="Usuário">
@@ -256,5 +242,25 @@
             <p class="link" onclick="showLoginForm()">Voltar para o Login</p>
         </div>
     </div>
+
+    <script>
+        // Função para escolher uma imagem de fundo aleatória
+        function setRandomBackground() {
+            const images = [
+                'imagens/imagem1.jpg',
+                'imagens/imagem2.jpg',
+                'imagens/imagem3.jpg',
+                'imagens/imagem4.jpg',
+                'imagens/imagem5.jpg',
+                'imagens/imagem6.jpg',
+                'imagens/imagem7.jpg'
+            ];
+            const randomImage = images[Math.floor(Math.random() * images.length)];
+            document.body.style.backgroundImage = `url('${randomImage}')`;
+        }
+
+        // Definir a imagem de fundo ao carregar a página
+        setRandomBackground();
+    </script>
 </body>
 </html>
